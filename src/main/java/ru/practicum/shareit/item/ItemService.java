@@ -1,9 +1,7 @@
 package ru.practicum.shareit.item;
 
 import org.springframework.stereotype.Service;
-import ru.practicum.shareit.exception.ModelAlreadyExistException;
 import ru.practicum.shareit.exception.UserIsNotOwnerException;
-import ru.practicum.shareit.item.model.Item;
 
 import java.util.Collection;
 
@@ -28,21 +26,15 @@ public class ItemService {
         return itemStorage.getAll(userId);
     }
 
-    public void update(Item item) {
-        int itemId = item.getId();
-        Item anotherItem = get(itemId);
-        int ownerId = anotherItem.getOwnerUserId();
-        int userId = item.getOwnerUserId();
+    public void update(Item item, int userId) {
+        int ownerId = item.getOwnerId();
         checkIds(ownerId, userId);
-        if (item.equals(anotherItem)) {
-            throw new ModelAlreadyExistException("Same item");
-        }
         itemStorage.update(item);
     }
 
     public void delete(int itemId, int userId) {
         Item item = get(itemId);
-        int ownedId = item.getOwnerUserId();
+        int ownedId = item.getOwnerId();
         checkIds(ownedId, userId);
         itemStorage.delete(itemId, userId);
     }

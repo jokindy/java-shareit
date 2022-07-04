@@ -1,8 +1,9 @@
 package ru.practicum.shareit.item.dto;
 
+import org.modelmapper.Conditions;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
-import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.item.Item;
 
 import java.util.Collection;
 import java.util.List;
@@ -15,6 +16,7 @@ public class ItemMapper {
 
     public ItemMapper(ModelMapper modelMapper) {
         this.modelMapper = modelMapper;
+        setUp();
     }
 
     public ItemDto toDto(Item item) {
@@ -25,9 +27,18 @@ public class ItemMapper {
         return modelMapper.map(itemDto, Item.class);
     }
 
+    public Item update(ItemDto itemDto, Item item) {
+        modelMapper.map(itemDto, item);
+        return item;
+    }
+
     public List<ItemDto> toDtoList(Collection<Item> list) {
         return list.stream()
                 .map(item -> modelMapper.map(item, ItemDto.class))
                 .collect(Collectors.toList());
+    }
+
+    private void setUp() {
+        modelMapper.getConfiguration().setPropertyCondition(Conditions.isNotNull());
     }
 }

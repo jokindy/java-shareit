@@ -1,16 +1,15 @@
 package ru.practicum.shareit.booking;
 
 import lombok.Data;
-import ru.practicum.shareit.item.model.Item;
+import lombok.NoArgsConstructor;
+import ru.practicum.shareit.item.Item;
 import ru.practicum.shareit.user.User;
 
-import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 
 @Data
+@NoArgsConstructor
 public class Booking {
-
-    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
 
     private int id;
     private LocalDate start;

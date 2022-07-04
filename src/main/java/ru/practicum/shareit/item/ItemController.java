@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemMapper;
-import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.UserService;
 
 import javax.validation.Valid;
@@ -25,22 +24,22 @@ public class ItemController {
     @PostMapping
     public ItemDto addItem(@Valid @RequestBody ItemDto itemDto, @RequestHeader("X-Sharer-User-Id") int userId) {
         log.info("Add new item by owner - user id: {}", userId);
-        userService.get(userId);
         Item item = itemMapper.toDomain(itemDto);
-        item.setOwnerUserId(userId);
+        userService.get(userId);
+        item.setOwnerId(userId);
         itemService.add(item);
         itemDto.setId(item.getId());
         return itemDto;
     }
 
-    @PutMapping
-    public ItemDto updateItem(@Valid @RequestBody ItemDto itemDto, @RequestHeader("X-Sharer-User-Id") int userId) {
-        log.info("Update item id: {} by owner - user id: {}", itemDto.getId(), userId);
-        userService.get(userId);
-        Item item = itemMapper.toDomain(itemDto);
-        item.setOwnerUserId(userId);
-        itemService.update(item);
-        return itemDto;
+    @PatchMapping("/{itemId}")
+    public ItemDto updateItem(@RequestBody ItemDto itemDto, @RequestHeader("X-Sharer-User-Id") int userId,
+                              @PathVariable int itemId) {
+        log.info("Update item id: {} by owner - user id: {}", itemId, userId);
+        Item item = new Item(itemService.get(itemId));
+        Item updatedItem = itemMapper.update(itemDto, item);
+        itemService.update(updatedItem, userId);
+        return itemMapper.toDto(updatedItem);
     }
 
     @GetMapping("/{itemId}")

@@ -3,7 +3,6 @@ package ru.practicum.shareit.item;
 import org.springframework.stereotype.Repository;
 import ru.practicum.shareit.exception.ModelAlreadyExistException;
 import ru.practicum.shareit.exception.ModelNotFoundException;
-import ru.practicum.shareit.item.model.Item;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -20,13 +19,13 @@ public class ItemStorageImpl implements ItemStorage {
 
     @Override
     public void add(Item item) {
-        int userId = item.getOwnerUserId();
+        int userId = item.getOwnerId();
         if (!items.containsKey(userId)) {
             Map<Integer, Item> itemMap = new HashMap<>();
             id++;
             item.setId(id);
             itemMap.put(item.getId(), item);
-            items.put(id, itemMap);
+            items.put(userId, itemMap);
         } else {
             if (items.get(userId).containsValue(item)) {
                 throw new ModelAlreadyExistException("This item is already added");
@@ -57,10 +56,13 @@ public class ItemStorageImpl implements ItemStorage {
 
     @Override
     public void update(Item item) {
-        int userId = item.getOwnerUserId();
+        int userId = item.getOwnerId();
         int itemId = item.getId();
         if (!items.containsKey(userId)) {
             throw new ModelNotFoundException(String.format("User id: %s has no items", userId));
+        }
+        if (items.get(userId).containsValue(item)) {
+            throw new ModelAlreadyExistException("Same item");
         }
         items.get(userId).put(itemId, item);
     }
@@ -75,8 +77,12 @@ public class ItemStorageImpl implements ItemStorage {
         if (items.isEmpty()) {
             throw new ModelNotFoundException("Storage is empty");
         }
+        if (text.isEmpty()) {
+            return new ArrayList<>();
+        }
         return items.values().stream()
                 .map(x -> findItem(x, text))
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }
 
@@ -85,10 +91,10 @@ public class ItemStorageImpl implements ItemStorage {
         for (Item item : map.values()) {
             String description = item.getDescription().toLowerCase(Locale.ROOT);
             String name = item.getName().toLowerCase(Locale.ROOT);
-            if (name.contains(text) || description.contains(text)) {
+            if ((name.contains(text) || description.contains(text)) && item.isAvailable()) {
                 return item;
             }
         }
-        throw new ModelNotFoundException("Can't find any item");
+        return null;
     }
 }
