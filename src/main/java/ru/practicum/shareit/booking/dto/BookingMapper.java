@@ -4,10 +4,6 @@ import org.modelmapper.*;
 import org.springframework.stereotype.Component;
 import ru.practicum.shareit.booking.Booking;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.stream.Collectors;
-
 import static ru.practicum.shareit.booking.BookingStatus.WAITING;
 
 @Component
