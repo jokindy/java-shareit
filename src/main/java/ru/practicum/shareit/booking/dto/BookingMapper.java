@@ -4,10 +4,6 @@ import org.modelmapper.*;
 import org.springframework.stereotype.Component;
 import ru.practicum.shareit.booking.Booking;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.stream.Collectors;
-
 import static ru.practicum.shareit.booking.BookingStatus.WAITING;
 
 @Component
@@ -20,22 +16,19 @@ public class BookingMapper {
         setUp();
     }
 
-    public BookingDto toDto(Booking booking) {
-        return modelMapper.map(booking, BookingDto.class);
+    public Booking toDomain(BookingInputDto bookingInputDto) {
+        return modelMapper.map(bookingInputDto, Booking.class);
     }
 
-    public Booking toDomain(BookingDto bookingDto) {
-        return modelMapper.map(bookingDto, Booking.class);
-    }
-
-    public List<BookingDto> toDtoList(Collection<Booking> list) {
-        return list.stream()
-                .map(booking -> modelMapper.map(booking, BookingDto.class))
-                .collect(Collectors.toList());
+    public BookingOutputDto toOutputDto(Booking booking, BookingInfo bookingInfo) {
+        BookingOutputDto extendedDto = modelMapper.map(booking, BookingOutputDto.class);
+        extendedDto.setItem(bookingInfo.getItem());
+        extendedDto.setBooker(bookingInfo.getUser());
+        return extendedDto;
     }
 
     private void setUp() {
-        modelMapper.createTypeMap(BookingDto.class, Booking.class).setPostConverter(
+        modelMapper.createTypeMap(BookingInputDto.class, Booking.class).setPostConverter(
                 ctx -> {
                     Booking booking = ctx.getDestination();
                     if (booking.getStatus() == null) {

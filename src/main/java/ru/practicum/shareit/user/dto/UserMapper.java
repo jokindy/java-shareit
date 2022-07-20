@@ -18,6 +18,10 @@ public class UserMapper {
         return modelMapper.map(userDto, User.class);
     }
 
+    public UserDto toDto(User user) {
+        return modelMapper.map(user, UserDto.class);
+    }
+
     public void prepareDto(UserDto userDto, User user) {
         if (userDto.getName() == null) {
             userDto.setName(user.getName());

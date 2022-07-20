@@ -1,35 +1,46 @@
 package ru.practicum.shareit.user;
 
 import org.springframework.stereotype.Service;
+import ru.practicum.shareit.exception.ModelNotFoundException;
 
+import javax.transaction.Transactional;
 import java.util.Collection;
+import java.util.Optional;
 
 @Service
 public class UserService {
 
-    private final UserStorage userStorage;
+    private final UserRepository repository;
 
-    public UserService(UserStorage userStorage) {
-        this.userStorage = userStorage;
+    public UserService(UserRepository userRepository) {
+        this.repository = userRepository;
     }
 
-    public void add(User user) {
-        userStorage.add(user);
+    @Transactional
+    public User add(User user) {
+        return repository.save(user);
     }
 
+    @Transactional
     public void update(User user) {
-        userStorage.update(user);
+        repository.setUserInfoById(user.getName(), user.getEmail(), user.getId());
     }
 
     public Collection<User> getAll() {
-        return userStorage.getAll();
+        return repository.findAll();
     }
 
     public User get(int userId) {
-        return userStorage.get(userId);
+        Optional<User> userOptional = repository.findById(userId);
+        if (userOptional.isPresent()) {
+            return userOptional.get();
+        } else {
+            throw new ModelNotFoundException(String.format("User id: %s not found", userId));
+        }
     }
 
     public void delete(int userId) {
-        userStorage.delete(userId);
+        get(userId);
+        repository.deleteById(userId);
     }
 }
