@@ -1,21 +1,51 @@
 package ru.practicum.shareit.user;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
+import org.hibernate.Hibernate;
+import ru.practicum.shareit.booking.Booking;
+import ru.practicum.shareit.item.Item;
 
-import javax.validation.constraints.*;
+import javax.persistence.*;
+import java.util.Set;
+import java.util.Objects;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-@EqualsAndHashCode
+@Getter
+@Setter
+@ToString
+@RequiredArgsConstructor
+@Entity
+@Table(name = "users")
 public class User {
 
-    @EqualsAndHashCode.Exclude
-    private int id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
     private String name;
-
-    @NotNull(message = "Email cannot be null")
-    @Email(regexp = "[a-z0-9A-Z._%+-]+@[a-z0-9.-]+\\.[a-z]{2,3}", message = "Wrong e-mail format")
-    @NotBlank(message = "Email cannot be empty")
     private String email;
+
+    @JsonIgnore
+    @OneToMany(cascade = CascadeType.ALL)
+    @JoinColumn(name = "owner_id")
+    @ToString.Exclude
+    private Set<Item> items;
+
+    @JsonIgnore
+    @OneToMany(cascade = CascadeType.ALL)
+    @JoinColumn(name = "booker_id")
+    @ToString.Exclude
+    private Set<Booking> bookings;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
+        User user = (User) o;
+        return id != null && Objects.equals(id, user.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }
