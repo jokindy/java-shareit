@@ -1,6 +1,7 @@
 package ru.practicum.shareit.booking;
 
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exception.ModelNotFoundException;
 import ru.practicum.shareit.exception.ValidationException;
@@ -13,6 +14,7 @@ import java.util.stream.Collectors;
 
 import static ru.practicum.shareit.booking.BookingStatus.*;
 
+@Slf4j
 @Service
 @AllArgsConstructor
 public class BookingService {
@@ -20,10 +22,12 @@ public class BookingService {
     private final BookingRepository repository;
 
     public void add(Booking booking) {
+        log.info("BookingService - saving new booking to DB");
         repository.save(booking);
     }
 
     public Booking get(int bookingId) {
+        log.info("BookingService - getting booking id: {}", bookingId);
         Optional<Booking> bookingOptional = repository.findById(bookingId);
         if (bookingOptional.isPresent()) {
             return bookingOptional.get();
@@ -34,6 +38,7 @@ public class BookingService {
 
     @Transactional
     public BookingStatus updateStatus(int bookingId, boolean isApproved, BookingStatus oldStatus) {
+        log.info("BookingService - updating status for booking id: {}", bookingId);
         BookingStatus newStatus = isApproved ? APPROVED : REJECTED;
         if (oldStatus.equals(newStatus)) {
             throw new ValidationException("Availability is already changed");
@@ -43,6 +48,7 @@ public class BookingService {
     }
 
     public Collection<Booking> getBookingsByUser(int userId, BookingState state) {
+        log.info("BookingService - getting bookings by user id: {} and state: {}", userId, state);
         LocalDateTime now = LocalDateTime.now();
         switch (state) {
             case CURRENT:
@@ -61,6 +67,7 @@ public class BookingService {
     }
 
     public Collection<Booking> getBookingsByOwner(Collection<Item> items, BookingState state) {
+        log.info("BookingService - getting bookings by owner and state: {}", state);
         LocalDateTime now = LocalDateTime.now();
         List<Booking> list = new ArrayList<>();
         for (Item item : items) {
