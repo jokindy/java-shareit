@@ -1,5 +1,6 @@
 package ru.practicum.shareit.booking;
 
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exception.ModelNotFoundException;
 import ru.practicum.shareit.exception.ValidationException;
@@ -13,16 +14,13 @@ import java.util.stream.Collectors;
 import static ru.practicum.shareit.booking.BookingStatus.*;
 
 @Service
+@AllArgsConstructor
 public class BookingService {
 
     private final BookingRepository repository;
 
-    public BookingService(BookingRepository repository) {
-        this.repository = repository;
-    }
-
-    public Booking add(Booking booking) {
-        return repository.save(booking);
+    public void add(Booking booking) {
+        repository.save(booking);
     }
 
     public Booking get(int bookingId) {
@@ -35,13 +33,13 @@ public class BookingService {
     }
 
     @Transactional
-    public void updateStatus(int bookingId, boolean isApproved, Booking booking) {
-        BookingStatus status = isApproved ? APPROVED : REJECTED;
-        if (booking.getStatus().equals(status)) {
+    public BookingStatus updateStatus(int bookingId, boolean isApproved, BookingStatus oldStatus) {
+        BookingStatus newStatus = isApproved ? APPROVED : REJECTED;
+        if (oldStatus.equals(newStatus)) {
             throw new ValidationException("Availability is already changed");
         }
-        booking.setStatus(status);
-        repository.updateBookingInfo(status, bookingId);
+        repository.updateBookingInfo(newStatus, bookingId);
+        return newStatus;
     }
 
     public Collection<Booking> getBookingsByUser(int userId, BookingState state) {
@@ -68,6 +66,7 @@ public class BookingService {
         for (Item item : items) {
             list.addAll(item.getBookings());
         }
+        Collections.reverse(list);
         switch (state) {
             case CURRENT:
                 return list.stream()
@@ -90,7 +89,6 @@ public class BookingService {
                         .filter(booking -> booking.getStatus().equals(REJECTED))
                         .collect(Collectors.toList());
             default:
-                Collections.reverse(list);
                 return list;
         }
     }

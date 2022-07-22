@@ -5,9 +5,7 @@ import org.springframework.stereotype.Component;
 import ru.practicum.shareit.item.comment.Comment;
 import ru.practicum.shareit.user.UserRepository;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.time.LocalDateTime;
 
 @Component
 public class CommentMapper {
@@ -26,16 +24,11 @@ public class CommentMapper {
         return modelMapper.map(comment, CommentDto.class);
     }
 
-    public List<CommentDto> toDtoList(Collection<Comment> comments) {
-        return comments.stream()
-                .map(comment -> modelMapper.map(comment, CommentDto.class))
-                .collect(Collectors.toList());
-    }
-
     public Comment toDomain(CommentDto commentDto) {
         return modelMapper.map(commentDto, Comment.class);
     }
 
+    @SuppressWarnings("OptionalGetWithoutIsPresent")
     private void setUp() {
         modelMapper.createTypeMap(Comment.class, CommentDto.class).setPostConverter(
                 ctx -> {
@@ -44,6 +37,13 @@ public class CommentMapper {
                     CommentDto dto = ctx.getDestination();
                     dto.setAuthorName(name);
                     return dto;
+                }
+        );
+        modelMapper.createTypeMap(CommentDto.class, Comment.class).setPostConverter(
+                ctx -> {
+                    Comment comment = ctx.getDestination();
+                    comment.setCreated(LocalDateTime.now());
+                    return comment;
                 }
         );
     }

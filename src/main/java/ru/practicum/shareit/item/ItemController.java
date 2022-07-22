@@ -10,7 +10,6 @@ import ru.practicum.shareit.item.dto.*;
 import ru.practicum.shareit.user.UserService;
 
 import javax.validation.Valid;
-import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
@@ -21,13 +20,13 @@ import java.util.List;
 public class ItemController {
 
     private ItemService itemService;
-    private ItemInfoService itemInfoService;
     private UserService userService;
     private ItemMapper itemMapper;
     private CommentMapper commentMapper;
 
     @PostMapping
-    public ItemInputDto addItem(@Valid @RequestBody ItemInputDto itemInputDto, @RequestHeader("X-Sharer-User-Id") int userId) {
+    public ItemInputDto addItem(@Valid @RequestBody ItemInputDto itemInputDto,
+                                @RequestHeader("X-Sharer-User-Id") int userId) {
         log.info("Add new item by owner - user id: {}", userId);
         Item item = itemMapper.toDomain(itemInputDto);
         userService.get(userId);
@@ -81,15 +80,11 @@ public class ItemController {
     public CommentDto addComment(@Valid @RequestBody CommentDto commentDto, @PathVariable int itemId,
                                  @RequestHeader("X-Sharer-User-Id") int userId) {
         log.info("Add new comment by user id: {} to item id: {}", itemId, userId);
-        commentDto.setCreated(LocalDateTime.now());
-        Item item = itemService.getByItemId(itemId);
-        String authorName = itemInfoService.getAuthorNameOrThrow(item, userId);
+        userService.get(userId);
         Comment comment = commentMapper.toDomain(commentDto);
-        comment.setAuthorId(userId);
         comment.setItemId(itemId);
-        comment = itemService.addComment(comment);
-        CommentDto dto = commentMapper.toDto(comment);
-        dto.setAuthorName(authorName);
-        return dto;
+        comment.setAuthorId(userId);
+        itemService.addComment(comment);
+        return commentMapper.toDto(comment);
     }
 }

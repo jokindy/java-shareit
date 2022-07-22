@@ -1,33 +1,30 @@
 package ru.practicum.shareit.booking;
 
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import ru.practicum.shareit.booking.dto.BookingInfo;
-import ru.practicum.shareit.booking.dto.BookingMapper;
-import ru.practicum.shareit.booking.dto.BookingOutputDto;
 import ru.practicum.shareit.exception.ItemIsNotAvailableException;
 import ru.practicum.shareit.exception.ModelNotFoundException;
 import ru.practicum.shareit.exception.UserIsNotOwnerException;
 import ru.practicum.shareit.item.Item;
 import ru.practicum.shareit.item.ItemRepository;
 import ru.practicum.shareit.item.ItemService;
-import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.user.UserService;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
+@Slf4j
 @Service
 @AllArgsConstructor
-public class BookingInfoService {
+public class BookingValidationService {
 
     private final UserService userService;
     private final ItemService itemService;
     private final ItemRepository itemRepository;
 
-    public BookingInfo isBookingValid(Booking booking) {
-        User user = userService.get(booking.getBookerId());
+    public void isBookingValidOrThrow(Booking booking) {
+        log.info("BookingValidationService - Check booking before saving in DB");
+        userService.get(booking.getBookerId());
         Item item = itemService.getByItemId(booking.getItemId());
         boolean available = item.isAvailable();
         if (!available) {
@@ -36,46 +33,32 @@ public class BookingInfoService {
         if (booking.getBookerId() == item.getOwnerId()) {
             throw new UserIsNotOwnerException("Owner and booker is the same");
         }
-        return new BookingInfo(user, item);
     }
 
-    public BookingInfo getBookingInfoByBookingOrThrow(int itemId, int ownerId, int bookerId) {
+    public void isInputIdsIsValidOrThrow(int itemId, int ownerId, int bookerId) {
+        log.info("BookingValidationService - Check input id's before getting booking");
         userService.get(ownerId);
-        User booker = userService.get(bookerId);
+        userService.get(bookerId);
         Item item = itemService.getByItemId(itemId);
         int ownerDbId = item.getOwnerId();
         if (ownerDbId != ownerId) {
             throw new UserIsNotOwnerException(String.format("User id: %s is not owner/booker for this item", ownerId));
         }
-        return new BookingInfo(booker, item);
     }
 
-    public BookingInfo isBookingValidOrThrow(Booking booking, int userId) {
-        User user = userService.get(userId);
+    public void isUserCanGetBookingOrThrow(Booking booking, int userId) {
+        log.info("BookingValidationService - Check is user id: {} has permission to get booking", userId);
+        userService.get(userId);
         Item item = itemService.getByItemId(booking.getItemId());
         int ownerId = item.getOwnerId();
         int bookerId = booking.getBookerId();
         if (ownerId != userId && bookerId != userId) {
             throw new UserIsNotOwnerException(String.format("User id: %s is not owner/booker for this item", userId));
         }
-        if (bookerId != userId) {
-            return new BookingInfo(userService.get(bookerId), item);
-        }
-        return new BookingInfo(user, item);
-    }
-
-    public Collection<BookingOutputDto> getBookings(Collection<Booking> bookings, BookingMapper bookingMapper) {
-        List<BookingOutputDto> list = new ArrayList<>();
-        for (Booking booking : bookings) {
-            User user = userService.get(booking.getBookerId());
-            Item item = itemService.getByItemId(booking.getItemId());
-            BookingOutputDto dto = bookingMapper.toOutputDto(booking, new BookingInfo(user, item));
-            list.add(dto);
-        }
-        return list;
     }
 
     public Collection<Item> getListOfUserItemsOrThrow(int userId) {
+        log.info("BookingValidationService - Check is user id: {} has items to show their bookings", userId);
         userService.get(userId);
         Collection<Item> items = itemRepository.getItemsByOwnerId(userId);
         if (items.isEmpty()) {
