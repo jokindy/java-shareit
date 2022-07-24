@@ -19,10 +19,10 @@ public class UserController {
     private UserMapper userMapper;
 
     @PostMapping
-    public User addUser(@Valid @RequestBody User user) {
+    public UserDto addUser(@Valid @RequestBody UserDto userDto) {
         log.info("Add new user");
-        userService.add(user);
-        return user;
+        User user = userMapper.toDomain(userDto);
+        return userMapper.toDto(userService.add(user));
     }
 
     @PatchMapping("/{userId}")

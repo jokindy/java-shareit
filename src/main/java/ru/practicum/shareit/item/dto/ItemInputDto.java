@@ -8,7 +8,7 @@ import javax.validation.constraints.NotNull;
 
 @Data
 @NoArgsConstructor
-public class ItemDto {
+public class ItemInputDto {
 
     private Integer id;
 

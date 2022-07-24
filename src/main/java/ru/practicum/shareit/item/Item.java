@@ -1,32 +1,55 @@
 package ru.practicum.shareit.item;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.*;
+import org.hibernate.Hibernate;
+import ru.practicum.shareit.booking.Booking;
+import ru.practicum.shareit.item.comment.Comment;
 
+import javax.persistence.*;
 import java.util.List;
+import java.util.Objects;
 
-@Data
-@EqualsAndHashCode
-@NoArgsConstructor
+@Getter
+@Setter
+@ToString
+@RequiredArgsConstructor
+@Entity
+@Table(name = "items")
 public class Item {
 
-    @EqualsAndHashCode.Exclude
-    private int id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
     private String name;
     private String description;
     private boolean available;
+
+    @Column(name = "owner_id")
     private int ownerId;
 
-    @EqualsAndHashCode.Exclude
-    private List<Integer> requests;
+    @JsonIgnore
+    @OneToMany(cascade = CascadeType.ALL)
+    @JoinColumn(name = "item_id")
+    @ToString.Exclude
+    private List<Booking> bookings;
 
-    public Item(Item item) {
-        this.id = item.getId();
-        this.name = item.getName();
-        this.description = item.getDescription();
-        this.available = item.isAvailable();
-        this.ownerId = item.getOwnerId();
-        this.requests = item.getRequests();
+    @JsonIgnore
+    @OneToMany(cascade = CascadeType.ALL)
+    @JoinColumn(name = "item_id")
+    @ToString.Exclude
+    private List<Comment> comments;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
+        Item item = (Item) o;
+        return id != null && Objects.equals(id, item.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
     }
 }
