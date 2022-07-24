@@ -19,7 +19,7 @@ public class UserService {
     }
 
     public User add(User user) {
-        log.info("UserService - saving new user to DB");
+        log.info("UserService - saving new user: {} to DB", user);
         return repository.save(user);
     }
 

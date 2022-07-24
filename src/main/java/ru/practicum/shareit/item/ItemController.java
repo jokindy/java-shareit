@@ -7,7 +7,6 @@ import ru.practicum.shareit.item.comment.Comment;
 import ru.practicum.shareit.item.comment.dto.CommentDto;
 import ru.practicum.shareit.item.comment.dto.CommentMapper;
 import ru.practicum.shareit.item.dto.*;
-import ru.practicum.shareit.user.UserService;
 
 import javax.validation.Valid;
 import java.util.Collection;
@@ -20,7 +19,6 @@ import java.util.List;
 public class ItemController {
 
     private ItemService itemService;
-    private UserService userService;
     private ItemMapper itemMapper;
     private CommentMapper commentMapper;
 
@@ -29,11 +27,9 @@ public class ItemController {
                                 @RequestHeader("X-Sharer-User-Id") int userId) {
         log.info("Add new item by owner - user id: {}", userId);
         Item item = itemMapper.toDomain(itemInputDto);
-        userService.get(userId);
         item.setOwnerId(userId);
         itemService.add(item);
-        itemInputDto.setId(item.getId());
-        return itemInputDto;
+        return itemMapper.toDto(item);
     }
 
     @PatchMapping("/{itemId}")
@@ -56,7 +52,6 @@ public class ItemController {
     @GetMapping
     public List<ItemOutputDto> getAllItems(@RequestHeader("X-Sharer-User-Id") int userId) {
         log.info("Get user's id: {} items", userId);
-        userService.get(userId);
         Collection<Item> list = itemService.getAllByOwnerId(userId);
         return itemMapper.toDtoList(list);
     }
@@ -64,7 +59,6 @@ public class ItemController {
     @DeleteMapping("/{itemId}")
     public String deleteItem(@PathVariable int itemId, @RequestHeader("X-Sharer-User-Id") int userId) {
         log.info("Delete item id: {} by owner - user id: {}", itemId, userId);
-        userService.get(userId);
         itemService.delete(itemId, userId);
         return String.format("Item id: %s is deleted", itemId);
     }
@@ -80,7 +74,6 @@ public class ItemController {
     public CommentDto addComment(@Valid @RequestBody CommentDto commentDto, @PathVariable int itemId,
                                  @RequestHeader("X-Sharer-User-Id") int userId) {
         log.info("Add new comment by user id: {} to item id: {}", itemId, userId);
-        userService.get(userId);
         Comment comment = commentMapper.toDomain(commentDto);
         comment.setItemId(itemId);
         comment.setAuthorId(userId);

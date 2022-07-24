@@ -10,6 +10,7 @@ import ru.practicum.shareit.exception.UserIsNotBookerException;
 import ru.practicum.shareit.exception.UserIsNotOwnerException;
 import ru.practicum.shareit.item.comment.Comment;
 import ru.practicum.shareit.item.comment.CommentRepository;
+import ru.practicum.shareit.user.UserService;
 
 import javax.transaction.Transactional;
 import java.time.LocalDateTime;
@@ -26,11 +27,13 @@ import static ru.practicum.shareit.booking.BookingStatus.APPROVED;
 @AllArgsConstructor
 public class ItemService {
 
+    private final UserService userService;
     private final ItemRepository repository;
     private final CommentRepository commentRepository;
 
     public void add(Item item) {
-        log.info("ItemService - saving new item to DB");
+        userService.get(item.getOwnerId());
+        log.info("ItemService - saving new item: {} to DB", item);
         repository.save(item);
     }
 
@@ -45,6 +48,7 @@ public class ItemService {
     }
 
     public Collection<Item> getAllByOwnerId(int userId) {
+        userService.get(userId);
         log.info("ItemService - finding items by owner id: {} ", userId);
         return repository.getItemsByOwnerId(userId);
     }
@@ -58,6 +62,7 @@ public class ItemService {
     }
 
     public void delete(int itemId, int userId) {
+        userService.get(userId);
         log.info("ItemService - deleting item id: {} by owner id: {}", itemId, userId);
         Item item = getByItemId(itemId);
         int ownedId = item.getOwnerId();
@@ -89,6 +94,7 @@ public class ItemService {
 
     private void isUserAbleToCommentOrThrow(int itemId, int userId) {
         log.info("ItemService - checking is user id: {} able to leave comment to item id: {}", userId, itemId);
+        userService.get(userId);
         Item item = getByItemId(itemId);
         List<Booking> bookings = item.getBookings();
         Map<Integer, Booking> bookerMap = bookings.stream()

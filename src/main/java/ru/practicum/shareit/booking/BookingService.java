@@ -20,31 +20,33 @@ import static ru.practicum.shareit.booking.BookingStatus.*;
 public class BookingService {
 
     private final BookingRepository repository;
+    private final BookingValidationService bookingValidationService;
 
     public void add(Booking booking) {
-        log.info("BookingService - saving new booking to DB");
+        bookingValidationService.isBookingValidOrThrow(booking);
+        log.info("BookingService - saving new booking: {} to DB", booking);
         repository.save(booking);
     }
 
-    public Booking get(int bookingId) {
-        log.info("BookingService - getting booking id: {}", bookingId);
-        Optional<Booking> bookingOptional = repository.findById(bookingId);
-        if (bookingOptional.isPresent()) {
-            return bookingOptional.get();
-        } else {
-            throw new ModelNotFoundException(String.format("Booking id: %s not found", bookingId));
-        }
+    public Booking getBookingByUser(int bookingId, int userId) {
+        Booking booking = get(bookingId);
+        bookingValidationService.isUserCanGetBookingOrThrow(booking, userId);
+        return booking;
     }
 
     @Transactional
-    public BookingStatus updateStatus(int bookingId, boolean isApproved, BookingStatus oldStatus) {
+    public Booking updateStatus(int bookingId, int userId, boolean isApproved) {
+        Booking booking = get(bookingId);
+        bookingValidationService.isInputIdsIsValidOrThrow(booking.getItemId(), userId, booking.getBookerId());
+        BookingStatus oldStatus = booking.getStatus();
         log.info("BookingService - updating status for booking id: {}", bookingId);
         BookingStatus newStatus = isApproved ? APPROVED : REJECTED;
         if (oldStatus.equals(newStatus)) {
             throw new ValidationException("Availability is already changed");
         }
         repository.updateBookingInfo(newStatus, bookingId);
-        return newStatus;
+        booking.setStatus(newStatus);
+        return booking;
     }
 
     public Collection<Booking> getBookingsByUser(int userId, BookingState state) {
@@ -66,7 +68,8 @@ public class BookingService {
         }
     }
 
-    public Collection<Booking> getBookingsByOwner(Collection<Item> items, BookingState state) {
+    public Collection<Booking> getBookingsByOwner(int userId, BookingState state) {
+        Collection<Item> items = bookingValidationService.getListOfUserItemsOrThrow(userId);
         log.info("BookingService - getting bookings by owner and state: {}", state);
         LocalDateTime now = LocalDateTime.now();
         List<Booking> list = new ArrayList<>();
@@ -97,6 +100,16 @@ public class BookingService {
                         .collect(Collectors.toList());
             default:
                 return list;
+        }
+    }
+
+    private Booking get(int bookingId) {
+        log.info("BookingService - getting booking id: {}", bookingId);
+        Optional<Booking> bookingOptional = repository.findById(bookingId);
+        if (bookingOptional.isPresent()) {
+            return bookingOptional.get();
+        } else {
+            throw new ModelNotFoundException(String.format("Booking id: %s not found", bookingId));
         }
     }
 }

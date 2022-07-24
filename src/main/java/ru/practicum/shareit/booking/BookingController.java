@@ -6,7 +6,6 @@ import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.booking.dto.BookingInputDto;
 import ru.practicum.shareit.booking.dto.BookingOutputDto;
 import ru.practicum.shareit.booking.dto.BookingMapper;
-import ru.practicum.shareit.item.Item;
 
 import javax.validation.Valid;
 import java.util.Collection;
@@ -19,7 +18,6 @@ public class BookingController {
 
     private final BookingService bookingService;
     private final BookingMapper bookingMapper;
-    private final BookingValidationService bookingValidationService;
 
     @PostMapping
     public BookingOutputDto add(@Valid @RequestBody BookingInputDto bookingInputDto,
@@ -27,7 +25,6 @@ public class BookingController {
         log.info("Add new booking by user id: {} to item id: {}", userId, bookingInputDto.getItemId());
         bookingInputDto.setBookerId(userId);
         Booking booking = bookingMapper.toDomain(bookingInputDto);
-        bookingValidationService.isBookingValidOrThrow(booking);
         bookingService.add(booking);
         return bookingMapper.toOutputDto(booking);
     }
@@ -36,19 +33,14 @@ public class BookingController {
     public BookingOutputDto updateAvailability(@PathVariable int bookingId, @RequestParam boolean approved,
                                                @RequestHeader("X-Sharer-User-Id") int userId) {
         log.info("Change availability by user id: {} to booking id: {}", userId, bookingId);
-        Booking booking = bookingService.get(bookingId);
-        bookingValidationService.isInputIdsIsValidOrThrow(booking.getItemId(), userId, booking.getBookerId());
-        BookingStatus status = booking.getStatus();
-        BookingStatus newStatus = bookingService.updateStatus(bookingId, approved, status);
-        booking.setStatus(newStatus);
-        return bookingMapper.toOutputDto(booking);
+        Booking updatedBooking = bookingService.updateStatus(bookingId, userId, approved);
+        return bookingMapper.toOutputDto(updatedBooking);
     }
 
     @GetMapping("/{bookingId}")
     public BookingOutputDto getBooking(@PathVariable int bookingId, @RequestHeader("X-Sharer-User-Id") int userId) {
-        log.info("Get booking id: {}", bookingId);
-        Booking booking = bookingService.get(bookingId);
-        bookingValidationService.isUserCanGetBookingOrThrow(booking, userId);
+        log.info("Get booking id: {} by user id: {}", bookingId, userId);
+        Booking booking = bookingService.getBookingByUser(bookingId, userId);
         return bookingMapper.toOutputDto(booking);
     }
 
@@ -64,8 +56,7 @@ public class BookingController {
     public Collection<BookingOutputDto> getBookingByOwner(@RequestParam(defaultValue = "ALL") BookingState state,
                                                           @RequestHeader("X-Sharer-User-Id") int userId) {
         log.info("Get bookings by owner id: {}", userId);
-        Collection<Item> items = bookingValidationService.getListOfUserItemsOrThrow(userId);
-        Collection<Booking> bookings = bookingService.getBookingsByOwner(items, state);
+        Collection<Booking> bookings = bookingService.getBookingsByOwner(userId, state);
         return bookingMapper.toOutputDtoList(bookings);
     }
 }
