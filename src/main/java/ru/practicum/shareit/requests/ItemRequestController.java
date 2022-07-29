@@ -22,7 +22,7 @@ public class ItemRequestController {
     public ItemRequest add(@RequestBody ItemRequestDto itemRequestDto) {
         // проверка маппинга запросов
         User user = userService.get(itemRequestDto.getRequestorId());
-        Item item = itemService.get(itemRequestDto.getItemId());
+        Item item = itemService.getByItemId(itemRequestDto.getItemId());
         ItemRequest itemRequest = requestMapper.toDomain(itemRequestDto);
         itemRequest.setRequestor(user);
         itemRequest.setItem(item);
