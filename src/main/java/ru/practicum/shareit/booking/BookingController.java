@@ -8,6 +8,7 @@ import ru.practicum.shareit.booking.dto.BookingOutputDto;
 import ru.practicum.shareit.booking.dto.BookingMapper;
 
 import javax.validation.Valid;
+import javax.validation.constraints.Positive;
 import java.util.Collection;
 
 @Slf4j
@@ -46,17 +47,23 @@ public class BookingController {
 
     @GetMapping
     public Collection<BookingOutputDto> getBookingsByIdAndState(@RequestParam(defaultValue = "ALL") BookingState state,
-                                                                @RequestHeader("X-Sharer-User-Id") int userId) {
+                                                                @RequestHeader("X-Sharer-User-Id") int userId,
+                                                                @Valid @Positive
+                                                                @RequestParam(defaultValue = "0") int from,
+                                                                @Valid @Positive
+                                                                @RequestParam(defaultValue = "10") int size) {
         log.info("Get bookings by user id: {}", userId);
-        Collection<Booking> bookings = bookingService.getBookingsByUser(userId, state);
+        Collection<Booking> bookings = bookingService.getBookingsByUser(userId, state, from, size).getContent();
         return bookingMapper.toOutputDtoList(bookings);
     }
 
     @GetMapping("/owner")
     public Collection<BookingOutputDto> getBookingByOwner(@RequestParam(defaultValue = "ALL") BookingState state,
-                                                          @RequestHeader("X-Sharer-User-Id") int userId) {
+                                                          @RequestHeader("X-Sharer-User-Id") int userId,
+                                                          @Valid @Positive @RequestParam(defaultValue = "0") int from,
+                                                          @Valid @Positive @RequestParam(defaultValue = "10") int size) {
         log.info("Get bookings by owner id: {}", userId);
-        Collection<Booking> bookings = bookingService.getBookingsByOwner(userId, state);
+        Collection<Booking> bookings = bookingService.getBookingsByOwner(userId, state, from, size).getContent();
         return bookingMapper.toOutputDtoList(bookings);
     }
 }

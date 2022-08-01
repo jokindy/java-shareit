@@ -1,26 +1,28 @@
 package ru.practicum.shareit.booking;
 
 import lombok.AllArgsConstructor;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exception.ModelNotFoundException;
+import ru.practicum.shareit.exception.SizeIsZeroException;
 import ru.practicum.shareit.exception.ValidationException;
-import ru.practicum.shareit.item.Item;
 
 import javax.transaction.Transactional;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static ru.practicum.shareit.booking.BookingStatus.*;
 
 @Slf4j
 @Service
+@Setter
 @AllArgsConstructor
 public class BookingService {
 
     private final BookingRepository repository;
-    private final BookingValidationService bookingValidationService;
+    private BookingValidationService bookingValidationService;
 
     public void add(Booking booking) {
         bookingValidationService.isBookingValidOrThrow(booking);
@@ -49,57 +51,45 @@ public class BookingService {
         return booking;
     }
 
-    public Collection<Booking> getBookingsByUser(int userId, BookingState state) {
+    public Page<Booking> getBookingsByUser(int userId, BookingState state, int from, int size) {
+        bookingValidationService.isUserHasItemsOrThrow(userId);
         log.info("BookingService - getting bookings by user id: {} and state: {}", userId, state);
         LocalDateTime now = LocalDateTime.now();
+        Pageable pageable = getPageable(from, size);
         switch (state) {
             case CURRENT:
-                return repository.findAllByEndIsAfterAndStartIsBeforeAndBookerId(now, now, userId);
+                return repository.findAllByEndIsAfterAndStartIsBeforeAndBookerIdOrderByIdDesc(now, now, userId, pageable);
             case PAST:
-                return repository.findAllByEndIsBeforeAndBookerId(now, userId);
+                return repository.findAllByEndIsBeforeAndBookerIdOrderByIdDesc(now, userId, pageable);
             case FUTURE:
-                return repository.findAllByStartIsAfterAndBookerId(now, userId);
+                return repository.findAllByStartIsAfterAndBookerIdOrderByIdDesc(now, userId, pageable);
             case WAITING:
-                return repository.findAllByStatusAndBookerId(WAITING, userId);
+                return repository.findAllByStatusAndBookerIdOrderByIdDesc(WAITING, userId, pageable);
             case REJECTED:
-                return repository.findAllByStatusAndBookerId(REJECTED, userId);
+                return repository.findAllByStatusAndBookerIdOrderByIdDesc(REJECTED, userId, pageable);
             default:
-                return repository.findAllByBookerIdOrderByIdDesc(userId);
+                return repository.findAllByBookerIdOrderByIdDesc(userId, pageable);
         }
     }
 
-    public Collection<Booking> getBookingsByOwner(int userId, BookingState state) {
-        Collection<Item> items = bookingValidationService.getListOfUserItemsOrThrow(userId);
+    public Page<Booking> getBookingsByOwner(int userId, BookingState state, int from, int size) {
+        bookingValidationService.isUserHasItemsOrThrow(userId);
         log.info("BookingService - getting bookings by owner and state: {}", state);
         LocalDateTime now = LocalDateTime.now();
-        List<Booking> list = new ArrayList<>();
-        for (Item item : items) {
-            list.addAll(item.getBookings());
-        }
-        Collections.reverse(list);
+        Pageable pageable = getPageable(from, size);
         switch (state) {
             case CURRENT:
-                return list.stream()
-                        .filter(booking -> booking.getStart().isBefore(now) && booking.getEnd().isAfter(now))
-                        .collect(Collectors.toList());
+                return repository.findCurrentByOwner(userId, now, now, pageable);
             case PAST:
-                return list.stream()
-                        .filter(booking -> booking.getEnd().isBefore(now))
-                        .collect(Collectors.toList());
+                return repository.findPastByOwner(userId, now, pageable);
             case FUTURE:
-                return list.stream()
-                        .filter(booking -> booking.getStart().isAfter(now))
-                        .collect(Collectors.toList());
+                return repository.findFutureByOwner(userId, now, pageable);
             case WAITING:
-                return list.stream()
-                        .filter(booking -> booking.getStatus().equals(WAITING))
-                        .collect(Collectors.toList());
+                return repository.findAllByOwnerAndStatusIsWaiting(userId, pageable);
             case REJECTED:
-                return list.stream()
-                        .filter(booking -> booking.getStatus().equals(REJECTED))
-                        .collect(Collectors.toList());
+                return repository.findAllByOwnerAndStatusIsRejected(userId, pageable);
             default:
-                return list;
+                return repository.findAllByOwner(userId, pageable);
         }
     }
 
@@ -111,5 +101,12 @@ public class BookingService {
         } else {
             throw new ModelNotFoundException(String.format("Booking id: %s not found", bookingId));
         }
+    }
+
+    private Pageable getPageable(int from, int size) {
+        if (size == 0) {
+            throw new SizeIsZeroException("Size can't be a zero");
+        }
+        return PageRequest.of(from, size, Sort.by("id").descending());
     }
 }
