@@ -12,7 +12,7 @@ import ru.practicum.shareit.user.User;
 import java.util.List;
 
 @DataJpaTest
-@TestPropertySource(locations = "classpath:application-test.properties")
+@TestPropertySource(locations = "classpath:application-test-item.properties")
 public class ItemRepositoryTest {
 
     @Autowired

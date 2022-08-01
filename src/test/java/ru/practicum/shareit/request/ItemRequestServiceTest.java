@@ -25,7 +25,7 @@ import static org.mockito.Mockito.mock;
 @Transactional
 @SpringBootTest
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
-@TestPropertySource(locations = "classpath:application-test.properties")
+@TestPropertySource(locations = "classpath:application-test-request.properties")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class ItemRequestServiceTest {
 

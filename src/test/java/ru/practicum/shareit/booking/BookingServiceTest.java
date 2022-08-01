@@ -26,7 +26,7 @@ import java.util.Random;
 @Transactional
 @SpringBootTest
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
-@TestPropertySource(locations = "classpath:application-test.properties")
+@TestPropertySource(locations = "classpath:application-test-booking.properties")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class BookingServiceTest {
 

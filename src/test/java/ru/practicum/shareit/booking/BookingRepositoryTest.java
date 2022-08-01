@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Random;
 
 @DataJpaTest
-@TestPropertySource(locations = "classpath:application-test.properties")
+@TestPropertySource(locations = "classpath:application-test-booking.properties")
 public class BookingRepositoryTest {
 
     @Autowired

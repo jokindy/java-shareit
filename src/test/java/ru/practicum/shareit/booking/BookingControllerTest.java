@@ -28,7 +28,6 @@ import static ru.practicum.shareit.booking.BookingStatus.APPROVED;
 import static ru.practicum.shareit.booking.BookingStatus.WAITING;
 
 @SpringBootTest
-@TestPropertySource(locations = "classpath:application-test.properties")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class BookingControllerTest {
 

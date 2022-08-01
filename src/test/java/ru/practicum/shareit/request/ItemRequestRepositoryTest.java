@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @DataJpaTest
-@TestPropertySource(locations = "classpath:application-test.properties")
+@TestPropertySource(locations = "classpath:application-test-request.properties")
 public class ItemRequestRepositoryTest {
 
     @Autowired
