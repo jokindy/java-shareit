@@ -1,11 +1,16 @@
 package ru.practicum.shareit.item;
 
 import lombok.AllArgsConstructor;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.booking.Booking;
 import ru.practicum.shareit.booking.BookingStatus;
 import ru.practicum.shareit.exception.ModelNotFoundException;
+import ru.practicum.shareit.exception.SizeIsZeroException;
 import ru.practicum.shareit.exception.UserIsNotBookerException;
 import ru.practicum.shareit.exception.UserIsNotOwnerException;
 import ru.practicum.shareit.item.comment.Comment;
@@ -15,19 +20,17 @@ import ru.practicum.shareit.user.UserService;
 import javax.transaction.Transactional;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static ru.practicum.shareit.booking.BookingStatus.APPROVED;
 
 @Slf4j
 @Service
+@Setter
 @AllArgsConstructor
 public class ItemService {
 
-    private final UserService userService;
+    private UserService userService;
     private final ItemRepository repository;
     private final CommentRepository commentRepository;
 
@@ -47,10 +50,17 @@ public class ItemService {
         }
     }
 
-    public Collection<Item> getAllByOwnerId(int userId) {
+    public Collection<Item> getItemsByOwnerIdInPage(int userId, int from, int size) {
+        userService.get(userId);
+        Pageable page = getPageable(from, size);
+        log.info("ItemService - finding items by owner id: {} ", userId);
+        return repository.getItemsByOwnerId(userId, page).getContent();
+    }
+
+    public Collection<Item> getAllItemsByOwner(int userId) {
         userService.get(userId);
         log.info("ItemService - finding items by owner id: {} ", userId);
-        return repository.getItemsByOwnerId(userId);
+        return repository.findAllByOwnerId(userId);
     }
 
     @Transactional
@@ -70,13 +80,14 @@ public class ItemService {
         repository.deleteById(itemId);
     }
 
-    public Collection<Item> getItemsBySearch(String text) {
+    public Collection<Item> getItemsBySearch(String text, int from, int size) {
         log.info("ItemService - searching items by text: {}", text);
         if (text.isEmpty()) {
             return new ArrayList<>();
         }
+        Pageable page = getPageable(from, size);
         text = "%" + text + "%";
-        return repository.findItemByText(text);
+        return repository.findItemByText(text, page).getContent();
     }
 
 
@@ -92,25 +103,32 @@ public class ItemService {
         }
     }
 
-    private void isUserAbleToCommentOrThrow(int itemId, int userId) {
+    public void isUserAbleToCommentOrThrow(int itemId, int userId) {
         log.info("ItemService - checking is user id: {} able to leave comment to item id: {}", userId, itemId);
         userService.get(userId);
         Item item = getByItemId(itemId);
         List<Booking> bookings = item.getBookings();
-        Map<Integer, Booking> bookerMap = bookings.stream()
-                .filter(distinctByKey(Booking::getBookerId))
-                .collect(Collectors.toMap(Booking::getBookerId, e -> e));
-        if (bookerMap.containsKey(userId)) {
-            BookingStatus status = bookerMap.get(userId).getStatus();
-            LocalDateTime start = bookerMap.get(userId).getStart();
-            if (!status.equals(APPROVED) || start.isAfter(LocalDateTime.now())) {
-                throw new UserIsNotBookerException(String.format("User id: %s is not booked this item yet", userId));
+        Map<Booking, Integer> bookerMap = bookings.stream()
+                .collect(Collectors.toMap(e -> e, Booking::getBookerId));
+        Booking checkedBooking = null;
+        if (bookerMap.containsValue(userId)) {
+            for (Booking booking : bookerMap.keySet()) {
+                BookingStatus status = booking.getStatus();
+                LocalDateTime start = booking.getStart();
+                if (status.equals(APPROVED) && start.isBefore(LocalDateTime.now())) {
+                    checkedBooking = booking;
+                }
             }
+        }
+        if (checkedBooking == null) {
+            throw new UserIsNotBookerException(String.format("User id: %s is not booked this item yet", userId));
         }
     }
 
-    private <T> Predicate<T> distinctByKey(Function<? super T, ?> keyExtractor) {
-        Map<Object, Boolean> seen = new ConcurrentHashMap<>();
-        return t -> seen.putIfAbsent(keyExtractor.apply(t), Boolean.TRUE) == null;
+    private Pageable getPageable(int from, int size) {
+        if (size == 0) {
+            throw new SizeIsZeroException("Size can't be a zero");
+        }
+        return PageRequest.of(from, size, Sort.by("id").descending());
     }
 }
