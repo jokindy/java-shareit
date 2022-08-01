@@ -4,6 +4,7 @@ import org.modelmapper.Conditions;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
 import ru.practicum.shareit.booking.Booking;
+import ru.practicum.shareit.booking.dto.BookingShortDto;
 import ru.practicum.shareit.item.Item;
 
 import java.util.*;
@@ -17,10 +18,6 @@ public class ItemMapper {
     public ItemMapper(ModelMapper modelMapper) {
         this.modelMapper = modelMapper;
         setUp();
-    }
-
-    public ItemInputDto toDto(Item item) {
-        return modelMapper.map(item, ItemInputDto.class);
     }
 
     public ItemOutputDto toOutputDto(Item item, int userId) {
@@ -53,12 +50,17 @@ public class ItemMapper {
                 ctx -> {
                     ItemOutputDto dto = ctx.getDestination();
                     List<Booking> bookings = ctx.getSource().getBookings();
-                    if (bookings.size() != 0) {
+                    if (bookings == null) {
+                        dto.setLastBooking(null);
+                        dto.setNextBooking(null);
+                    } else if (bookings.size() != 0) {
                         List<Booking> bookingList = bookings.stream()
                                 .sorted((e1, e2) -> e2.getStart().compareTo(e1.getStart()))
                                 .collect(Collectors.toList());
-                        dto.setNextBooking(bookingList.get(0));
-                        dto.setLastBooking(bookingList.get(bookingList.size() - 1));
+
+                        dto.setNextBooking(modelMapper.map(bookingList.get(0), BookingShortDto.class));
+                        dto.setLastBooking(modelMapper.map(bookingList.get(bookingList.size() - 1),
+                                BookingShortDto.class));
                     }
                     return dto;
                 }

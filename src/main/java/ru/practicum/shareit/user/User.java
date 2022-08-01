@@ -1,10 +1,11 @@
 package ru.practicum.shareit.user;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import org.hibernate.Hibernate;
 import ru.practicum.shareit.booking.Booking;
 import ru.practicum.shareit.item.Item;
+import ru.practicum.shareit.item.comment.Comment;
+import ru.practicum.shareit.request.ItemRequest;
 
 import javax.persistence.*;
 import java.util.Set;
@@ -24,17 +25,25 @@ public class User {
     private String name;
     private String email;
 
-    @JsonIgnore
-    @OneToMany(cascade = CascadeType.ALL)
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "owner_id")
     @ToString.Exclude
     private Set<Item> items;
 
-    @JsonIgnore
-    @OneToMany(cascade = CascadeType.ALL)
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "booker_id")
     @ToString.Exclude
     private Set<Booking> bookings;
+
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "requester_id")
+    @ToString.Exclude
+    private Set<ItemRequest> requests;
+
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "author_id")
+    @ToString.Exclude
+    private Set<Comment> comments;
 
     @Override
     public boolean equals(Object o) {

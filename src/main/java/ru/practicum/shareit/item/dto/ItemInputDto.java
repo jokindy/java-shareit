@@ -22,4 +22,6 @@ public class ItemInputDto {
 
     @NotNull(message = "Available can't be null")
     private Boolean available;
+
+    private Integer requestId;
 }

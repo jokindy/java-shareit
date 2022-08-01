@@ -9,6 +9,7 @@ import ru.practicum.shareit.item.comment.dto.CommentMapper;
 import ru.practicum.shareit.item.dto.*;
 
 import javax.validation.Valid;
+import javax.validation.constraints.Positive;
 import java.util.Collection;
 import java.util.List;
 
@@ -23,23 +24,23 @@ public class ItemController {
     private CommentMapper commentMapper;
 
     @PostMapping
-    public ItemInputDto addItem(@Valid @RequestBody ItemInputDto itemInputDto,
-                                @RequestHeader("X-Sharer-User-Id") int userId) {
+    public ItemOutputDto addItem(@Valid @RequestBody ItemInputDto itemInputDto,
+                                 @RequestHeader("X-Sharer-User-Id") int userId) {
         log.info("Add new item by owner - user id: {}", userId);
         Item item = itemMapper.toDomain(itemInputDto);
         item.setOwnerId(userId);
         itemService.add(item);
-        return itemMapper.toDto(item);
+        return itemMapper.toOutputDto(item, userId);
     }
 
     @PatchMapping("/{itemId}")
-    public ItemInputDto updateItem(@RequestBody ItemInputDto itemInputDto, @RequestHeader("X-Sharer-User-Id") int userId,
-                                   @PathVariable int itemId) {
+    public ItemOutputDto updateItem(@RequestBody ItemInputDto itemInputDto,
+                                    @RequestHeader("X-Sharer-User-Id") int userId, @PathVariable int itemId) {
         log.info("Update item id: {} by owner - user id: {}", itemId, userId);
         Item item = itemService.getByItemId(itemId);
         Item updatedItem = itemMapper.update(itemInputDto, item);
         itemService.update(updatedItem, userId);
-        return itemMapper.toDto(updatedItem);
+        return itemMapper.toOutputDto(updatedItem, userId);
     }
 
     @GetMapping("/{itemId}")
@@ -50,9 +51,11 @@ public class ItemController {
     }
 
     @GetMapping
-    public List<ItemOutputDto> getAllItems(@RequestHeader("X-Sharer-User-Id") int userId) {
+    public List<ItemOutputDto> getAllItems(@RequestHeader("X-Sharer-User-Id") int userId,
+                                           @Valid @Positive @RequestParam(defaultValue = "0") int from,
+                                           @Valid @Positive @RequestParam(defaultValue = "10") int size) {
         log.info("Get user's id: {} items", userId);
-        Collection<Item> list = itemService.getAllByOwnerId(userId);
+        Collection<Item> list = itemService.getItemsByOwnerIdInPage(userId, from, size);
         return itemMapper.toDtoList(list);
     }
 
@@ -64,9 +67,11 @@ public class ItemController {
     }
 
     @GetMapping("/search")
-    public List<ItemOutputDto> getSearchItems(@RequestParam String text) {
+    public List<ItemOutputDto> getSearchItems(@RequestParam String text,
+                                              @Valid @Positive @RequestParam(defaultValue = "0") int from,
+                                              @Valid @Positive @RequestParam(defaultValue = "10") int size) {
         log.info("Search items by '{}'", text);
-        Collection<Item> list = itemService.getItemsBySearch(text);
+        Collection<Item> list = itemService.getItemsBySearch(text, from, size);
         return itemMapper.toDtoList(list);
     }
 
