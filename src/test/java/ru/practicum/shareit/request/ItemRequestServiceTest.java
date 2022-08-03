@@ -6,7 +6,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
 import ru.practicum.shareit.user.User;
-import ru.practicum.shareit.user.UserService;
 
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
@@ -19,7 +18,6 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.hamcrest.Matchers.hasProperty;
-import static org.mockito.Mockito.mock;
 
 
 @Transactional
@@ -39,8 +37,6 @@ public class ItemRequestServiceTest {
         user.setEmail("john@mail.com");
         em.persist(user);
         em.flush();
-        UserService mockUserService = mock(UserService.class);
-        requestService.setUserService(mockUserService);
     }
 
     @Order(1)

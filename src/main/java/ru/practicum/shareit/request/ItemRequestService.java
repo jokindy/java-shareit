@@ -1,7 +1,6 @@
 package ru.practicum.shareit.request;
 
 import lombok.AllArgsConstructor;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -16,13 +15,12 @@ import java.util.List;
 import java.util.Optional;
 
 @Slf4j
-@Setter
 @Service
 @AllArgsConstructor
 public class ItemRequestService {
 
     private final ItemRequestRepository repository;
-    private UserService userService;
+    private final UserService userService;
 
     public void add(ItemRequest itemRequest) {
         userService.get(itemRequest.getRequesterId());

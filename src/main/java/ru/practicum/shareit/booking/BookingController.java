@@ -24,8 +24,7 @@ public class BookingController {
     public BookingOutputDto add(@Valid @RequestBody BookingInputDto bookingInputDto,
                                 @RequestHeader("X-Sharer-User-Id") int userId) {
         log.info("Add new booking by user id: {} to item id: {}", userId, bookingInputDto.getItemId());
-        bookingInputDto.setBookerId(userId);
-        Booking booking = bookingMapper.toDomain(bookingInputDto);
+        Booking booking = bookingMapper.toDomain(bookingInputDto, userId);
         bookingService.add(booking);
         return bookingMapper.toOutputDto(booking);
     }

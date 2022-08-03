@@ -22,24 +22,24 @@ import static ru.practicum.shareit.booking.BookingStatus.*;
 public class BookingService {
 
     private final BookingRepository repository;
-    private BookingValidationService bookingValidationService;
+    private final BookingValidator bookingValidator;
 
     public void add(Booking booking) {
-        bookingValidationService.isBookingValidOrThrow(booking);
+        bookingValidator.isBookingValidOrThrow(booking);
         log.info("BookingService - saving new booking: {} to DB", booking);
         repository.save(booking);
     }
 
     public Booking getBookingByUser(int bookingId, int userId) {
         Booking booking = get(bookingId);
-        bookingValidationService.isUserCanGetBookingOrThrow(booking, userId);
+        bookingValidator.isUserCanGetBookingOrThrow(booking, userId);
         return booking;
     }
 
     @Transactional
     public Booking updateStatus(int bookingId, int userId, boolean isApproved) {
         Booking booking = get(bookingId);
-        bookingValidationService.isInputIdsIsValidOrThrow(booking.getItemId(), userId, booking.getBookerId());
+        bookingValidator.isInputIdsIsValidOrThrow(booking.getItemId(), userId, booking.getBookerId());
         BookingStatus oldStatus = booking.getStatus();
         log.info("BookingService - updating status for booking id: {}", bookingId);
         BookingStatus newStatus = isApproved ? APPROVED : REJECTED;
@@ -52,13 +52,13 @@ public class BookingService {
     }
 
     public Page<Booking> getBookingsByUser(int userId, BookingState state, int from, int size) {
-        bookingValidationService.isUserHasItemsOrThrow(userId);
+        bookingValidator.isUserHasItemsOrThrow(userId);
         log.info("BookingService - getting bookings by user id: {} and state: {}", userId, state);
         LocalDateTime now = LocalDateTime.now();
         Pageable pageable = getPageable(from, size);
         switch (state) {
             case CURRENT:
-                return repository.findAllByEndIsAfterAndStartIsBeforeAndBookerIdOrderByIdDesc(now, now, userId, pageable);
+                return repository.findAllCurrentByBooker(userId, now, pageable);
             case PAST:
                 return repository.findAllByEndIsBeforeAndBookerIdOrderByIdDesc(now, userId, pageable);
             case FUTURE:
@@ -73,21 +73,21 @@ public class BookingService {
     }
 
     public Page<Booking> getBookingsByOwner(int userId, BookingState state, int from, int size) {
-        bookingValidationService.isUserHasItemsOrThrow(userId);
+        bookingValidator.isUserHasItemsOrThrow(userId);
         log.info("BookingService - getting bookings by owner and state: {}", state);
         LocalDateTime now = LocalDateTime.now();
         Pageable pageable = getPageable(from, size);
         switch (state) {
             case CURRENT:
-                return repository.findCurrentByOwner(userId, now, now, pageable);
+                return repository.findAllCurrentByOwner(userId, now, pageable);
             case PAST:
-                return repository.findPastByOwner(userId, now, pageable);
+                return repository.findAllPastByOwner(userId, now, pageable);
             case FUTURE:
-                return repository.findFutureByOwner(userId, now, pageable);
+                return repository.findAllFutureByOwner(userId, now, pageable);
             case WAITING:
-                return repository.findAllByOwnerAndStatusIsWaiting(userId, pageable);
+                return repository.findAllWaitingByOwner(userId, pageable);
             case REJECTED:
-                return repository.findAllByOwnerAndStatusIsRejected(userId, pageable);
+                return repository.findAllRejectedByOwner(userId, pageable);
             default:
                 return repository.findAllByOwner(userId, pageable);
         }

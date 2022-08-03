@@ -15,7 +15,7 @@ import java.util.Collection;
 @Slf4j
 @Service
 @AllArgsConstructor
-public class BookingValidationService {
+public class BookingValidator {
 
     private final UserService userService;
     private final ItemService itemService;

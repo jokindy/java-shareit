@@ -5,6 +5,7 @@ import org.junit.jupiter.api.*;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.TestPropertySource;
 import ru.practicum.shareit.booking.Booking;
 import ru.practicum.shareit.booking.BookingStatus;
@@ -34,6 +35,8 @@ public class ItemServiceTest {
 
     private final EntityManager em;
     private final ItemService itemService;
+    @MockBean
+    private final UserService userService;
 
     @BeforeEach
     void setUp() {
@@ -42,9 +45,7 @@ public class ItemServiceTest {
         user.setEmail("john@mail.com");
         em.persist(user);
         em.flush();
-        UserService mockUserService = mock(UserService.class);
-        itemService.setUserService(mockUserService);
-        when(mockUserService.get(Mockito.anyInt()))
+        when(userService.get(Mockito.anyInt()))
                 .thenReturn(new User());
     }
 

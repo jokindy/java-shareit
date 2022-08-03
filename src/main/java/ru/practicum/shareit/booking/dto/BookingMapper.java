@@ -24,7 +24,8 @@ public class BookingMapper {
         setUp();
     }
 
-    public Booking toDomain(BookingInputDto bookingInputDto) {
+    public Booking toDomain(BookingInputDto bookingInputDto, int userId) {
+        bookingInputDto.setBookerId(userId);
         return modelMapper.map(bookingInputDto, Booking.class);
     }
 

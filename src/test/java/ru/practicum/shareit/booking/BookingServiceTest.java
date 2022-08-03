@@ -5,6 +5,7 @@ import org.junit.jupiter.api.*;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.TestPropertySource;
 import ru.practicum.shareit.item.Item;
 import ru.practicum.shareit.user.User;
@@ -33,6 +34,9 @@ public class BookingServiceTest {
     private final EntityManager em;
     private final BookingService bookingService;
 
+    @MockBean
+    private final BookingValidator bookingValidator;
+
     @BeforeEach
     void setUp() {
         User user = new User();
@@ -40,10 +44,8 @@ public class BookingServiceTest {
         user.setEmail("john@mail.com");
         em.persist(user);
         em.flush();
-        BookingValidationService mockValidationService = mock(BookingValidationService.class);
-        bookingService.setBookingValidationService(mockValidationService);
         doNothing()
-                .when(mockValidationService)
+                .when(bookingValidator)
                 .isUserHasItemsOrThrow(Mockito.anyInt());
     }
 
@@ -121,5 +123,4 @@ public class BookingServiceTest {
         item.setOwnerId(ownerId);
         return item;
     }
-
 }

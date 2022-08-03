@@ -1,7 +1,6 @@
 package ru.practicum.shareit.item;
 
 import lombok.AllArgsConstructor;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -26,11 +25,10 @@ import static ru.practicum.shareit.booking.BookingStatus.APPROVED;
 
 @Slf4j
 @Service
-@Setter
 @AllArgsConstructor
 public class ItemService {
 
-    private UserService userService;
+    private final UserService userService;
     private final ItemRepository repository;
     private final CommentRepository commentRepository;
 
