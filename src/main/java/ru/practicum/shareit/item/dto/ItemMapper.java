@@ -29,8 +29,10 @@ public class ItemMapper {
         return dto;
     }
 
-    public Item toDomain(ItemInputDto itemInputDto) {
-        return modelMapper.map(itemInputDto, Item.class);
+    public Item toDomain(ItemInputDto itemInputDto, int userId) {
+        Item item = modelMapper.map(itemInputDto, Item.class);
+        item.setOwnerId(userId);
+        return item;
     }
 
     public Item update(ItemInputDto itemInputDto, Item item) {

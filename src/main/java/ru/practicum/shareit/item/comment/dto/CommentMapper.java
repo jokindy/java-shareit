@@ -24,8 +24,11 @@ public class CommentMapper {
         return modelMapper.map(comment, CommentDto.class);
     }
 
-    public Comment toDomain(CommentDto commentDto) {
-        return modelMapper.map(commentDto, Comment.class);
+    public Comment toDomain(CommentDto commentDto, int itemId, int authorId) {
+        Comment comment = modelMapper.map(commentDto, Comment.class);
+        comment.setItemId(itemId);
+        comment.setAuthorId(authorId);
+        return comment;
     }
 
     @SuppressWarnings("OptionalGetWithoutIsPresent")

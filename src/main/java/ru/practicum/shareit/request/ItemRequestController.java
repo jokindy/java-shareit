@@ -7,7 +7,6 @@ import ru.practicum.shareit.request.dto.ItemRequestMapper;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Positive;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -21,9 +20,7 @@ public class ItemRequestController {
     @PostMapping
     public ItemRequestDto add(@Valid @RequestBody ItemRequestDto itemRequestDto,
                               @RequestHeader("X-Sharer-User-Id") int userId) {
-        itemRequestDto.setRequesterId(userId);
-        itemRequestDto.setCreated(LocalDateTime.now());
-        ItemRequest request = requestMapper.toDomain(itemRequestDto);
+        ItemRequest request = requestMapper.toDomain(itemRequestDto, userId);
         itemRequestService.add(request);
         return requestMapper.toDto(request);
     }

@@ -27,8 +27,7 @@ public class ItemController {
     public ItemOutputDto addItem(@Valid @RequestBody ItemInputDto itemInputDto,
                                  @RequestHeader("X-Sharer-User-Id") int userId) {
         log.info("Add new item by owner - user id: {}", userId);
-        Item item = itemMapper.toDomain(itemInputDto);
-        item.setOwnerId(userId);
+        Item item = itemMapper.toDomain(itemInputDto, userId);
         itemService.add(item);
         return itemMapper.toOutputDto(item, userId);
     }
@@ -79,9 +78,7 @@ public class ItemController {
     public CommentDto addComment(@Valid @RequestBody CommentDto commentDto, @PathVariable int itemId,
                                  @RequestHeader("X-Sharer-User-Id") int userId) {
         log.info("Add new comment by user id: {} to item id: {}", itemId, userId);
-        Comment comment = commentMapper.toDomain(commentDto);
-        comment.setItemId(itemId);
-        comment.setAuthorId(userId);
+        Comment comment = commentMapper.toDomain(commentDto, itemId, userId);
         itemService.addComment(comment);
         return commentMapper.toDto(comment);
     }
