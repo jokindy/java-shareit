@@ -7,7 +7,6 @@ import ru.practicum.shareit.exception.ItemIsNotAvailableException;
 import ru.practicum.shareit.exception.ModelNotFoundException;
 import ru.practicum.shareit.exception.UserIsNotOwnerException;
 import ru.practicum.shareit.item.Item;
-import ru.practicum.shareit.item.ItemRepository;
 import ru.practicum.shareit.item.ItemService;
 import ru.practicum.shareit.user.UserService;
 
@@ -16,11 +15,10 @@ import java.util.Collection;
 @Slf4j
 @Service
 @AllArgsConstructor
-public class BookingValidationService {
+public class BookingValidator {
 
     private final UserService userService;
     private final ItemService itemService;
-    private final ItemRepository itemRepository;
 
     public void isBookingValidOrThrow(Booking booking) {
         log.info("BookingValidationService - Check booking before saving in DB");
@@ -57,13 +55,11 @@ public class BookingValidationService {
         }
     }
 
-    public Collection<Item> getListOfUserItemsOrThrow(int userId) {
+    public void isUserHasItemsOrThrow(int userId) {
         log.info("BookingValidationService - Check is user id: {} has items to show their bookings", userId);
-        userService.get(userId);
-        Collection<Item> items = itemRepository.getItemsByOwnerId(userId);
+        Collection<Item> items = itemService.getAllItemsByOwner(userId);
         if (items.isEmpty()) {
             throw new ModelNotFoundException("User don't have any item");
         }
-        return items;
     }
 }

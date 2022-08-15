@@ -1,25 +1,61 @@
 package ru.practicum.shareit.booking;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 public interface BookingRepository extends JpaRepository<Booking, Integer> {
+
+    String QUERY_FOR_ALL = "select b.id, b.start_date_time, b.end_date_time, b.item_id, b.booker_id, b.status" +
+            " from bookings b" +
+            "         left outer join items i on b.item_id = i.id\n" +
+            "         left outer join users u on u.id = i.owner_id\n" +
+            "where u.id = ?1";
+
+    String QUERY_FOR_CURRENT = QUERY_FOR_ALL + " and (b.start_date_time < ?2 and b.end_date_time > ?2)";
+
+    String QUERY_FOR_PAST = QUERY_FOR_ALL + " and b.end_date_time < ?2";
+
+    String QUERY_FOR_FUTURE = QUERY_FOR_ALL + " and b.start_date_time > ?2";
+
+    String QUERY_FOR_WAITING = QUERY_FOR_ALL + " and b.status = 'WAITING'";
+
+    String QUERY_FOR_REJECTED = QUERY_FOR_ALL + " and b.status = 'REJECTED'";
 
     @Modifying
     @Query("update Booking b set b.status = ?1 where b.id = ?2")
     void updateBookingInfo(BookingStatus status, int bookingId);
 
-    List<Booking> findAllByBookerIdOrderByIdDesc(int bookerId);
+    Page<Booking> findAllByBookerIdOrderByIdDesc(int bookerId, Pageable pageable);
 
-    List<Booking> findAllByEndIsAfterAndStartIsBeforeAndBookerId(LocalDateTime end, LocalDateTime start, int bookerId);
+    @Query("select b from Booking b where b.bookerId = ?1 and (b.start < ?2 and b.end > ?2) order by b.id desc")
+    Page<Booking> findAllCurrentByBooker(int bookerId, LocalDateTime now, Pageable pageable);
 
-    List<Booking> findAllByEndIsBeforeAndBookerId(LocalDateTime now, int bookerId);
+    Page<Booking> findAllByEndIsBeforeAndBookerIdOrderByIdDesc(LocalDateTime now, int bookerId, Pageable pageable);
 
-    List<Booking> findAllByStartIsAfterAndBookerId(LocalDateTime now, int bookerId);
+    Page<Booking> findAllByStartIsAfterAndBookerIdOrderByIdDesc(LocalDateTime now, int bookerId, Pageable pageable);
 
-    List<Booking> findAllByStatusAndBookerId(BookingStatus status, int bookerId);
+    Page<Booking> findAllByStatusAndBookerIdOrderByIdDesc(BookingStatus status, int bookerId, Pageable pageable);
+
+    @Query(value = QUERY_FOR_ALL, nativeQuery = true)
+    Page<Booking> findAllByOwner(int userId, Pageable pageable);
+
+    @Query(value = QUERY_FOR_CURRENT, nativeQuery = true)
+    Page<Booking> findAllCurrentByOwner(int userId, LocalDateTime now, Pageable pageable);
+
+    @Query(value = QUERY_FOR_PAST, nativeQuery = true)
+    Page<Booking> findAllPastByOwner(int userId, LocalDateTime now, Pageable pageable);
+
+    @Query(value = QUERY_FOR_FUTURE, nativeQuery = true)
+    Page<Booking> findAllFutureByOwner(int userId, LocalDateTime now, Pageable pageable);
+
+    @Query(value = QUERY_FOR_WAITING, nativeQuery = true)
+    Page<Booking> findAllWaitingByOwner(int userId, Pageable pageable);
+
+    @Query(value = QUERY_FOR_REJECTED, nativeQuery = true)
+    Page<Booking> findAllRejectedByOwner(int userId, Pageable pageable);
 }

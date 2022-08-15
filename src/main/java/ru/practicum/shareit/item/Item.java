@@ -1,6 +1,5 @@
 package ru.practicum.shareit.item;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import org.hibernate.Hibernate;
 import ru.practicum.shareit.booking.Booking;
@@ -28,13 +27,14 @@ public class Item {
     @Column(name = "owner_id")
     private int ownerId;
 
-    @JsonIgnore
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "item_id")
     @ToString.Exclude
     private List<Booking> bookings;
 
-    @JsonIgnore
+    @Column(name = "request_id")
+    private Integer requestId;
+
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "item_id")
     @ToString.Exclude

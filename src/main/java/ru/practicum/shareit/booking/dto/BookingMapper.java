@@ -1,12 +1,13 @@
 package ru.practicum.shareit.booking.dto;
 
 import org.modelmapper.*;
+import org.modelmapper.convention.MatchingStrategies;
 import org.springframework.stereotype.Component;
 import ru.practicum.shareit.booking.Booking;
 import ru.practicum.shareit.item.Item;
-import ru.practicum.shareit.item.ItemRepository;
+import ru.practicum.shareit.item.dto.ItemShortDto;
 import ru.practicum.shareit.user.User;
-import ru.practicum.shareit.user.UserRepository;
+import ru.practicum.shareit.user.dto.UserDto;
 
 import java.util.Collection;
 import java.util.stream.Collectors;
@@ -17,17 +18,14 @@ import static ru.practicum.shareit.booking.BookingStatus.WAITING;
 public class BookingMapper {
 
     private final ModelMapper modelMapper;
-    private final UserRepository userRepository;
-    private final ItemRepository itemRepository;
 
-    public BookingMapper(ModelMapper modelMapper, UserRepository userRepository, ItemRepository itemRepository) {
+    public BookingMapper(ModelMapper modelMapper) {
         this.modelMapper = modelMapper;
-        this.userRepository = userRepository;
-        this.itemRepository = itemRepository;
         setUp();
     }
 
-    public Booking toDomain(BookingInputDto bookingInputDto) {
+    public Booking toDomain(BookingInputDto bookingInputDto, int userId) {
+        bookingInputDto.setBookerId(userId);
         return modelMapper.map(bookingInputDto, Booking.class);
     }
 
@@ -41,8 +39,8 @@ public class BookingMapper {
                 .collect(Collectors.toList());
     }
 
-    @SuppressWarnings("OptionalGetWithoutIsPresent")
     private void setUp() {
+        modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT);
         modelMapper.createTypeMap(BookingInputDto.class, Booking.class).setPostConverter(
                 ctx -> {
                     Booking booking = ctx.getDestination();
@@ -56,10 +54,16 @@ public class BookingMapper {
                 ctx -> {
                     Booking booking = ctx.getSource();
                     BookingOutputDto dto = ctx.getDestination();
-                    User user = userRepository.findById(booking.getBookerId()).get();
-                    Item item = itemRepository.findById(booking.getItemId()).get();
-                    dto.setBooker(user);
-                    dto.setItem(item);
+                    Item item = booking.getItem();
+                    if (item != null) {
+                        ItemShortDto itemShortDto = modelMapper.map(item, ItemShortDto.class);
+                        dto.setItem(itemShortDto);
+                    }
+                    User booker = booking.getBooker();
+                    if (booker != null) {
+                        UserDto userDto = modelMapper.map(booker, UserDto.class);
+                        dto.setBooker(userDto);
+                    }
                     return dto;
                 }
         );
