@@ -23,6 +23,7 @@ public class BookingService {
 
     private final BookingRepository repository;
     private final BookingValidator bookingValidator;
+    private static final int DEFAULT_SIZE_VALUE = 100;
 
     public void add(Booking booking) {
         bookingValidator.isBookingValidOrThrow(booking);
@@ -107,7 +108,7 @@ public class BookingService {
         if (size == 0) {
             throw new SizeIsZeroException("Size can't be a zero");
         }
-        if (size == 100) {
+        if (size == DEFAULT_SIZE_VALUE) {
             return PageRequest.of(from - 1, size, Sort.by("id").descending());
         } else {
             return PageRequest.of(from - 1, size, Sort.by("id").ascending());
