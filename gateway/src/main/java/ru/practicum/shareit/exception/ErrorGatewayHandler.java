@@ -73,7 +73,6 @@ public class ErrorGatewayHandler {
         return processFieldErrors(fieldErrors);
     }
 
-    //ConstraintViolationException
     private FieldErrorResponse processFieldErrors(List<FieldError> fieldErrors) {
         FieldErrorResponse error = new FieldErrorResponse("Not valid fields");
         for (FieldError fieldError : fieldErrors) {
@@ -96,7 +95,7 @@ public class ErrorGatewayHandler {
     }
 
     static class FieldErrorResponse {
-        ErrorResponse errorResponse;
+        private ErrorResponse errorResponse;
         private final Map<String, String> fieldErrors;
 
         public FieldErrorResponse(String error) {
@@ -110,6 +109,14 @@ public class ErrorGatewayHandler {
 
         public Map<String, String> getFieldErrors() {
             return fieldErrors;
+        }
+
+        public ErrorResponse getErrorResponse() {
+            return errorResponse;
+        }
+
+        public void setErrorResponse(ErrorResponse errorResponse) {
+            this.errorResponse = errorResponse;
         }
     }
 }
